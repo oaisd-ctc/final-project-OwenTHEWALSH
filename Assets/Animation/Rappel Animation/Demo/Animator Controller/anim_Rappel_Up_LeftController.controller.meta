@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 74c6f6c3b5fcb2d40a4c71b1c855633a
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 9100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 320252
+  packageName: Rappel Animation
+  packageVersion: 1.0
+  assetPath: Assets/Rappel Animation/Demo/Animator Controller/anim_Rappel_Up_LeftController.controller
+  uploadId: 789106

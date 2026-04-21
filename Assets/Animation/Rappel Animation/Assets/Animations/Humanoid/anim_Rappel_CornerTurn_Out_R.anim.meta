@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 323a87ea21973e140bfccefb35c0aa40
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 320252
+  packageName: Rappel Animation
+  packageVersion: 1.0
+  assetPath: Assets/Rappel Animation/Assets/Animations/Humanoid/anim_Rappel_CornerTurn_Out_R.anim
+  uploadId: 789106

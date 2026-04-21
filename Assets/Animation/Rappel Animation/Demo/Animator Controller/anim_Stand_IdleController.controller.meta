@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 5f8810a5f91f86a42aa17c8b2d10a771
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 9100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 320252
+  packageName: Rappel Animation
+  packageVersion: 1.0
+  assetPath: Assets/Rappel Animation/Demo/Animator Controller/anim_Stand_IdleController.controller
+  uploadId: 789106

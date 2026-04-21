@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 34fd7c9b5e273b041b821cc678909866
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 320252
+  packageName: Rappel Animation
+  packageVersion: 1.0
+  assetPath: Assets/Rappel Animation/Assets/Animations/Humanoid/anim_Rappel_Up_Right.anim
+  uploadId: 789106

@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: b19c33fb96bdb3842b0963789eb426b5
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 320252
+  packageName: Rappel Animation
+  packageVersion: 1.0
+  assetPath: Assets/Rappel Animation/Assets/Animations/Humanoid/anim_Rappel_Idle.anim
+  uploadId: 789106

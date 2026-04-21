@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: e4fb01ec15d4b794793b4aab6bca7c18
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 320252
+  packageName: Rappel Animation
+  packageVersion: 1.0
+  assetPath: Assets/Rappel Animation/Assets/Animations/Humanoid/anim_Rappel_Jump_Right.anim
+  uploadId: 789106

@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 3478f0c26f084d34e92f6f454875381f
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 320252
+  packageName: Rappel Animation
+  packageVersion: 1.0
+  assetPath: Assets/Rappel Animation/Assets/Animations/Humanoid/anim_Rappel_Ground_Exit.anim
+  uploadId: 789106

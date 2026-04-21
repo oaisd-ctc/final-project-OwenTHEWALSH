@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: b537caf24ec23a646827f18bb49c22f7
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 9100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 320252
+  packageName: Rappel Animation
+  packageVersion: 1.0
+  assetPath: Assets/Rappel Animation/Demo/Animator Controller/anim_Rappel_CornerTurn_Out_RController.controller
+  uploadId: 789106

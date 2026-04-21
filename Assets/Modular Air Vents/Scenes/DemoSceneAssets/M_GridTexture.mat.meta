@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 73aa66b3b4b40fb4da17b87c8d09cb0b
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 328582
+  packageName: Modular Air Vent Ductwork
+  packageVersion: 1.0
+  assetPath: Assets/Modular Air Vents/Scenes/DemoSceneAssets/M_GridTexture.mat
+  uploadId: 777696

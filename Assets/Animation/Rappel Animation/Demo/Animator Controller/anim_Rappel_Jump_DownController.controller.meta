@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 854302db63692dd4fbe64b3057d4f80c
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 9100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 320252
+  packageName: Rappel Animation
+  packageVersion: 1.0
+  assetPath: Assets/Rappel Animation/Demo/Animator Controller/anim_Rappel_Jump_DownController.controller
+  uploadId: 789106
