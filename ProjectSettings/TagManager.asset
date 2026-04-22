@@ -3,12 +3,14 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 2
-  tags: []
+  tags:
+  - HIM
+  - Trigger
   layers:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - Him
   - Water
   - UI
   - 
