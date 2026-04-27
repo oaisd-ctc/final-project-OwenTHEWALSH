@@ -35,15 +35,6 @@ public class Player : MonoBehaviour
     [SerializeField]
     private string repelTag = "HIM";
 
-    [Header("HIM Introduction")]
-    [Tooltip("HIM GameObject to introduce on first Space press.")]
-    [SerializeField]
-    private GameObject himGameObject;
-
-    [Tooltip("Dialogue text for HIM's introduction.")]
-    [SerializeField]
-    private string introductionDialogue = "Hello...";
-
     // Prevent starting multiple concurrent moves       
     private Coroutine moveCoroutine;
 

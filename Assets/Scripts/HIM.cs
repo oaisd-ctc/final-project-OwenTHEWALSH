@@ -1,40 +1,35 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 public class HIM : MonoBehaviour
 {
     [Header("Visibility Settings")]
-    [Tooltip("Renderer component to control visibility (shadow state).")]
     [SerializeField]
     private Renderer himRenderer;
 
-    [Tooltip("Additional renderer to fade (e.g., Eyes or another child component).")]
     [SerializeField]
     private Renderer additionalRenderer;
 
-    [Tooltip("Alpha value when hidden in shadows (0-1).")]
     [SerializeField]
     private float shadowAlpha = 0.1f;
 
-    [Tooltip("Alpha value when visible/speaking (0-1).")]
     [SerializeField]
     private float visibleAlpha = 1f;
 
-    [Tooltip("Time to fade in/out (seconds).")]
     [SerializeField]
     private float fadeDuration = 0.5f;
 
-    [Header("Text Box Settings")]
-    [Tooltip("Canvas or parent object for text boxes to appear.")]
+    [Header("Text Settings")]
     [SerializeField]
-    private Transform textBoxParent;
+    private TextMeshProUGUI textDisplay;
 
-    [Tooltip("Prefab for text box UI (optional).")]
     [SerializeField]
-    private GameObject textBoxPrefab;
+    private float wordDelay = 0.5f;
 
     private Coroutine fadeCoroutine;
+    private Coroutine typingCoroutine;
     private bool isVisible = false;
     private Material himMaterial;
     private Material additionalMaterial;
@@ -50,11 +45,6 @@ public class HIM : MonoBehaviour
         {
             himMaterial = himRenderer.material;
             SetAlpha(himMaterial, shadowAlpha);
-            isVisible = false;
-        }
-        else
-        {
-            Debug.LogWarning("HIM: No Renderer found. Visibility control will not work.");
         }
 
         if (additionalRenderer != null)
@@ -65,8 +55,8 @@ public class HIM : MonoBehaviour
     }
 
     private void Update()
-    {   
-        
+    {
+        // Visibility logic only - no terror mode tracking
     }
 
     public void ShowHIM(string dialogueText = "")
@@ -85,30 +75,57 @@ public class HIM : MonoBehaviour
         }
     }
 
-    public void HideHIM()
+    [SerializeField]
+    private string sentenceToDisplay = "Hello...";
+
+    public void ShowTextBox(string text = "")
     {
-        if (fadeCoroutine != null)
+        string displayText = string.IsNullOrEmpty(text) ? sentenceToDisplay : text;
+
+        if (typingCoroutine != null)
         {
-            StopCoroutine(fadeCoroutine);
+            StopCoroutine(typingCoroutine);
         }
 
-        fadeCoroutine = StartCoroutine(FadeRoutine(shadowAlpha));
-        isVisible = false;
-        HideTextBox();
-    }
-
-    public void ShowTextBox(string text)
-    {
-        // Leave this for you to implement with your UI system
-        Debug.Log($"HIM Says: {text}");
-        // TODO: Instantiate or activate textBoxPrefab here with the dialogue text
+        typingCoroutine = StartCoroutine(TypeOutText(displayText));
+        Debug.Log($"HIM Says: {displayText}");
     }
 
     public void HideTextBox()
     {
-        // Leave this for you to implement with your UI system  
+        if (typingCoroutine != null)
+        {
+            StopCoroutine(typingCoroutine);
+        }
+
+        if (textDisplay != null)
+        {
+            textDisplay.text = string.Empty;
+        }
+
         Debug.Log("Text box hidden");
-        // TODO: Deactivate or destroy text boxes here
+    }
+
+    private IEnumerator TypeOutText(string sentence)
+    {
+        if (textDisplay == null)
+        {
+            Debug.LogWarning("HIM: TextMeshProUGUI component not assigned");
+            yield break;
+        }
+
+        textDisplay.text = string.Empty;
+        string[] words = sentence.Split(' ');
+        string displayedText = string.Empty;
+
+        foreach (string word in words)
+        {
+            displayedText += word + " ";
+            textDisplay.text = displayedText.TrimEnd();
+            yield return new WaitForSeconds(wordDelay);
+        }
+
+        typingCoroutine = null;
     }
 
     private IEnumerator FadeRoutine(float targetAlpha)
@@ -117,7 +134,6 @@ public class HIM : MonoBehaviour
             yield break;
 
         Color startHIMColor = himMaterial.color;
-        Color startAdditionalColor = additionalMaterial != null ? additionalMaterial.color : Color.white;
         float elapsedTime = 0f;
 
         while (elapsedTime < fadeDuration)
