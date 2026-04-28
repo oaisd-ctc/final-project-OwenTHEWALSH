@@ -29,6 +29,24 @@ public class Climb : MonoBehaviour
     [SerializeField]
     private float doubleMoveAmount = 10f;
 
+    // New STOP settings: HIM will say "STOP" after a random delay in this range.
+    [Tooltip("Minimum delay (seconds) before HIM says STOP.")]
+    [SerializeField]
+    private float stopMinDelay = 5f;
+
+    [Tooltip("Maximum delay (seconds) before HIM says STOP.")]
+    [SerializeField]
+    private float stopMaxDelay = 10f;
+
+    [Tooltip("Duration (seconds) the STOP check is active. If player moves during this window it's game over.")]
+    [SerializeField]
+    private float stopCheckDuration = 2f;
+
+    // Threshold to consider the player has moved.
+    [Tooltip("Movement threshold to detect player movement (meters).")]
+    [SerializeField]
+    private float moveThreshold = 0.1f;
+
     private HIM himScript;
     private GameObject textBox;
     private Vector3 lastPlayerPosition;
@@ -39,6 +57,11 @@ public class Climb : MonoBehaviour
     private bool qteEnabled = false;
     private bool movementLocked = false;
     public bool GameOver = false;
+
+    // STOP state
+    private bool stopActive = false;
+    private Vector3 stopStartPosition;
+    private Coroutine stopCoroutine;
 
     private void Start()
     {
@@ -61,24 +84,60 @@ public class Climb : MonoBehaviour
 
     private void Update()
     {
-        // Check if player moved while text is active
+        if (GameOver)
+            return;
+
+        // Check if player moved while intro text is active -> immediate Game Over
         if (textActive)
         {
-            if (Vector3.Distance(Camera.main.transform.position, lastPlayerPosition) > 0.1f)
+            if (Camera.main != null && Vector3.Distance(Camera.main.transform.position, lastPlayerPosition) > moveThreshold)
             {
-                Debug.Log("Climb: Player moved during text!");
+                Debug.Log("Climb: Player moved during intro text! Game Over.");
                 textActive = false;
+                GameOver = true;
+                movementLocked = true;
+                qteActive = false;
+                qteEnabled = false;
+                stopActive = false;
+
                 if (textBox != null)
                 {
                     textBox.SetActive(false);
                 }
+
+                if (stopCoroutine != null)
+                {
+                    StopCoroutine(stopCoroutine);
+                    stopCoroutine = null;
+                }
+
+                return;
+            }
+        }
+
+        // STOP takes priority: if STOP is active and player moves -> Game Over
+        if (stopActive && Camera.main != null)
+        {
+            if (Vector3.Distance(Camera.main.transform.position, stopStartPosition) > moveThreshold)
+            {
+                Debug.Log("Climb: Player moved during STOP! Game Over by STOP priority.");
+                TriggerStopFailed();
+                return;
             }
         }
 
         // Handle Space key to attempt climb (only after QTE is enabled and movement not locked)
         if (!GameOver && qteEnabled && !movementLocked && Input.GetKeyDown(KeyCode.Space))
         {
-            AttemptClimb();
+            // If STOP is active, do not allow attempts that could bypass STOP priority
+            if (stopActive)
+            {
+                Debug.Log("Climb: Attempt ignored because STOP is active.");
+            }
+            else
+            {
+                AttemptClimb();
+            }
         }
 
         // Handle QTE input
@@ -93,7 +152,16 @@ public class Climb : MonoBehaviour
 
             if (Input.GetKeyDown(KeyCode.E))
             {
-                QTESuccess();
+                // If STOP is active, STOP overrides QTE success
+                if (stopActive)
+                {
+                    Debug.Log("Climb: QTE input ignored due to STOP priority.");
+                    qteActive = false;
+                }
+                else
+                {
+                    QTESuccess();
+                }
             }
         }
     }
@@ -101,7 +169,6 @@ public class Climb : MonoBehaviour
     public void LockPlayerMovement(bool isLocked)
     {
         movementLocked = isLocked;
-        
     }
 
     public void ActivateClimb(GameObject displayTextBox, string displayText, float delayBeforeClimb)
@@ -111,7 +178,7 @@ public class Climb : MonoBehaviour
 
         climbTriggered = true;
         textBox = displayTextBox;
-        lastPlayerPosition = Camera.main.transform.position;
+        lastPlayerPosition = Camera.main != null ? Camera.main.transform.position : Vector3.zero;
         
         if (textBox != null)
         {
@@ -119,6 +186,12 @@ public class Climb : MonoBehaviour
         }
         
         StartCoroutine(TextBoxRoutine(displayText, delayBeforeClimb));
+
+        if (stopCoroutine != null)
+        {
+            StopCoroutine(stopCoroutine);
+        }
+        stopCoroutine = StartCoroutine(StopRoutine());
     }
 
     private IEnumerator TextBoxRoutine(string text, float delayBeforeClimb)
@@ -126,7 +199,6 @@ public class Climb : MonoBehaviour
         textActive = true;
         if (textBox != null)
         {
-            // Update text box with the display text
             TextMeshProUGUI textComponent = textBox.GetComponent<TextMeshProUGUI>();
             if (textComponent != null)
             {
@@ -134,17 +206,22 @@ public class Climb : MonoBehaviour
             }
         }   
         yield return new WaitForSeconds(3f);
+
+        if (GameOver)
+            yield break;
+
         textActive = false;
         if (textBox != null)
         {
             textBox.SetActive(false);
         }
 
-        // Delay before enabling QTE
         Debug.Log($"Climb: Waiting {delayBeforeClimb} seconds before QTE starts...");
         yield return new WaitForSeconds(delayBeforeClimb);
 
-        // Unlock player movement and enable QTE
+        if (GameOver)
+            yield break;
+
         movementLocked = false;
         qteEnabled = true;
         Debug.Log("Climb: QTE enabled! Press Space to climb!");
@@ -152,17 +229,14 @@ public class Climb : MonoBehaviour
 
     private void AttemptClimb()
     {
-        // 25% chance to trigger QTE
         float randomValue = Random.value;
         
         if (randomValue < qteChance)
         {
-            // QTE triggered
             StartCoroutine(QTERoutine());
         }
         else
         {
-            // Normal climb without QTE
             MovePlayerUp(normalMoveAmount);
             Debug.Log("Climb: Normal climb! No QTE this time.");
         }
@@ -179,6 +253,55 @@ public class Climb : MonoBehaviour
         {
             QTEFailed();
         }
+    }
+
+    private IEnumerator StopRoutine()
+    {
+        float delay = Random.Range(stopMinDelay, stopMaxDelay);
+        Debug.Log($"Climb: STOP will be announced in {delay:F2} seconds.");
+        yield return new WaitForSeconds(delay);
+
+        if (GameOver)
+            yield break;
+
+        if (himScript != null)
+        {
+            himScript.ShowHIM("STOP");
+        }
+        else
+        {
+            Debug.Log("Climb: HIM not assigned, but STOP announced internally.");
+        }
+
+        bool previousQteEnabled = qteEnabled;
+        qteEnabled = false;
+
+        if (qteActive)
+        {
+            qteActive = false;
+            Debug.Log("Climb: Active QTE cancelled due to STOP priority.");
+        }
+
+        stopActive = true;
+        stopStartPosition = Camera.main != null ? Camera.main.transform.position : Vector3.zero;
+
+        float elapsed = 0f;
+        while (elapsed < stopCheckDuration && !GameOver)
+        {
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        stopActive = false;
+        qteEnabled = previousQteEnabled;
+
+        if (himScript != null)
+        {
+            himScript.HideTextBox();
+        }
+
+        stopCoroutine = null;
+        Debug.Log("Climb: STOP window ended.");
     }
 
     private void MovePlayerUp(float amount)
@@ -201,5 +324,14 @@ public class Climb : MonoBehaviour
         qteActive = false;
         GameOver = true;
         Debug.Log("Climb: QTE Failed! Game Over!");
+    }
+
+    private void TriggerStopFailed()
+    {
+        stopActive = false;
+        qteActive = false;
+        qteEnabled = false;
+        GameOver = true;
+        Debug.Log("Climb: STOP failure - Player moved. Game Over!");
     }
 }
