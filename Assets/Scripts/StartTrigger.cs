@@ -38,6 +38,15 @@ public class StartTrigger : MonoBehaviour
     [SerializeField]
     private float minimumTriggerDuration = 2.0f;
 
+    [Header("Text Display Settings")]
+    [Tooltip("Delay between each word appearing on screen (seconds).")]
+    [SerializeField]
+    private float wordDisplayDelay = 0.5f;
+
+    [Tooltip("Duration to display the intro text before it disappears (seconds).")]
+    [SerializeField]
+    private float introTextDisplayDuration = 3.0f;
+
     private Climb climbScript;
     private HIM himScript;
 
@@ -157,9 +166,36 @@ public class StartTrigger : MonoBehaviour
         
         if (textGameObject != null)
         {
-            textGameObject.SetActive(true);
+            // Set the text with word-by-word animation
+            StartCoroutine(AnimateText(introductionDialogue, wordDisplayDelay));
             Debug.Log("StartTrigger: Text activated!");
         }
+    }
+
+    private IEnumerator AnimateText(string text, float delayPerWord)
+    {
+        TextMeshProUGUI textComponent = textGameObject.GetComponent<TextMeshProUGUI>();
+        if (textComponent == null)
+        {
+            Debug.LogWarning("StartTrigger: TextMeshProUGUI component not found on text GameObject");
+            yield break;
+        }
+
+        textGameObject.SetActive(true);
+        textComponent.text = string.Empty;
+
+        string[] words = text.Split(' ');
+        string displayedText = string.Empty;
+
+        foreach (string word in words)
+        {
+            displayedText += word + " ";
+            textComponent.text = displayedText.TrimEnd();
+            yield return new WaitForSeconds(delayPerWord);
+        }
+
+        yield return new WaitForSeconds(introTextDisplayDuration);
+        textGameObject.SetActive(false);
     }
 
     private void ActivateQTE()

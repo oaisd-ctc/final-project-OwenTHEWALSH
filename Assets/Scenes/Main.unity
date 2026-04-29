@@ -173,7 +173,7 @@ MonoBehaviour:
   fadeDuration: 0.5
   textDisplay: {fileID: 1688741921}
   wordDelay: 1
-  sentenceToDisplay: Climb The Rope
+  sentenceToDisplay: 
 --- !u!135 &39472531
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -580,7 +580,7 @@ Transform:
   m_GameObject: {fileID: 872974767}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -21.26, y: -161.45, z: -15.46}
+  m_LocalPosition: {x: -21.26, y: -187.27, z: -15.46}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -622,11 +622,13 @@ MonoBehaviour:
   targetCamera: {fileID: 963194227}
   himGameObject: {fileID: 39472526}
   textGameObject: {fileID: 1688741919}
-  introductionDialogue: Climb The Rope GO!!
+  introductionDialogue: Climb The Rope
   climbGameObject: {fileID: 1903231498}
   delayBeforeIntroText: 1
   delayBeforeQTE: 4
   minimumTriggerDuration: 1
+  wordDisplayDelay: 1
+  introTextDisplayDuration: 2
 --- !u!1 &929914415
 GameObject:
   m_ObjectHideFlags: 0
@@ -854,6 +856,63 @@ Transform:
   - {fileID: 1484335336}
   m_Father: {fileID: 1903231499}
   m_LocalEulerAnglesHint: {x: -92.939, y: 1.4839935, z: -5.8170166}
+--- !u!1 &1362032833
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1362032835}
+  - component: {fileID: 1362032834}
+  m_Layer: 0
+  m_Name: GameLoop
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1362032834
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1362032833}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5601870ba04adb349bde968f6c3d9749, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  himGameObject: {fileID: 39472526}
+  textBoxGameObject: {fileID: 1688741919}
+  qteTextGameObject: {fileID: 929914415}
+  qteChance: 0.25
+  qteWindow: 2
+  normalMoveAmount: 5
+  doubleMoveAmount: 10
+  stopMinDelay: 10
+  stopMaxDelay: 10
+  stopCheckDuration: 2
+  stopDialogue: STOP
+  moveThreshold: 0.1
+  GameOver: 0
+--- !u!4 &1362032835
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1362032833}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -964.66797, y: -356.71628, z: -103.316765}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1484335335
 GameObject:
   m_ObjectHideFlags: 0
@@ -1305,7 +1364,7 @@ Transform:
   m_GameObject: {fileID: 1903231498}
   serializedVersion: 2
   m_LocalRotation: {x: 0.09623456, y: 0.00031099873, z: 0.009487958, w: 0.9953134}
-  m_LocalPosition: {x: 1.57, y: 71.3, z: -0.22}
+  m_LocalPosition: {x: 1.57, y: 46.05, z: -0.22}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1344,7 +1403,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   himGameObject: {fileID: 39472526}
-  textBoxGameObject: {fileID: 929914415}
+  textBoxGameObject: {fileID: 1688741919}
+  qteTextGameObject: {fileID: 929914415}
   qteChance: 0.25
   qteWindow: 5
   normalMoveAmount: 5
@@ -1381,7 +1441,7 @@ Transform:
   m_GameObject: {fileID: 1969795877}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -21.26, y: -1.1, z: -15.46}
+  m_LocalPosition: {x: -21.26, y: 47.1, z: -15.45}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1504,7 +1564,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2167668691029186902, guid: b565af211a1d4684e833be5898d30ef7, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2167668691029186902, guid: b565af211a1d4684e833be5898d30ef7, type: 3}
       propertyPath: m_TagString
@@ -1612,3 +1672,4 @@ SceneRoots:
   - {fileID: 180981101}
   - {fileID: 837376258}
   - {fileID: 2032171165}
+  - {fileID: 1362032835}
