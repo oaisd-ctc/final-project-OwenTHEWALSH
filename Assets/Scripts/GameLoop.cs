@@ -6,98 +6,62 @@ using TMPro;
 public class GameLoop : MonoBehaviour
 {
     [Header("References")]
-    [Tooltip("HIM script reference for tracking.")]
-    [SerializeField]
-    private GameObject himGameObject;
-
-    [Tooltip("Text box GameObject for displaying intro text.")]
-    [SerializeField]
-    private GameObject textBoxGameObject;
-
-    [Tooltip("QTE text GameObject to display during QTE.")]
-    [SerializeField]
-    private GameObject qteTextGameObject;
+    [SerializeField] private GameObject himGameObject;
+    [SerializeField] private GameObject textBoxGameObject;
+    [SerializeField] private GameObject qteTextGameObject;
 
     [Header("QTE Settings")]
-    [Tooltip("Probability of QTE triggering (0-1).")]
-    [SerializeField]
-    private float qteChance = 0.25f;
-
-    [Tooltip("Time window to press E during QTE.")]
-    [SerializeField]
-    private float qteWindow = 2f;
+    [SerializeField] private float qteChance = 0.25f;
+    [SerializeField] private float qteWindow = 2f;
 
     [Header("Movement Settings")]
-    [Tooltip("Normal upward movement amount.")]
-    [SerializeField]
-    private float normalMoveAmount = 5f;
-
-    [Tooltip("Double upward movement amount on QTE success.")]
-    [SerializeField]
-    private float doubleMoveAmount = 10f;
+    [SerializeField] private float normalMoveAmount = 5f;
+    [SerializeField] private float doubleMoveAmount = 10f;
 
     [Header("STOP Settings")]
-    [Tooltip("Minimum delay (seconds) before HIM says STOP.")]
-    [SerializeField]
-    private float stopMinDelay = 5f;
-
-    [Tooltip("Maximum delay (seconds) before HIM says STOP.")]
-    [SerializeField]
-    private float stopMaxDelay = 10f;
-
-    [Tooltip("Duration (seconds) the STOP check is active. If player moves during this window it's game over.")]
-    [SerializeField]
-    private float stopCheckDuration = 2f;
-
-    [Header("HIM Dialogue")]
-    [Tooltip("What HIM says during the STOP phase.")]
-    [SerializeField]
-    private string stopDialogue = "STOP";
+    [SerializeField] private float stopMinDelay = 5f;
+    [SerializeField] private float stopMaxDelay = 10f;
+    [SerializeField] private float stopCheckDuration = 2f;
+    [SerializeField] private string stopDialogue = "STOP";
 
     [Header("Detection Settings")]
-    [Tooltip("Movement threshold to detect player movement (meters).")]
-    [SerializeField]
-    private float moveThreshold = 0.1f;
+    [SerializeField] private float moveThreshold = 0.1f;
 
+    // Private state
     private HIM himScript;
     private GameObject textBox;
     private GameObject qteText;
     private Vector3 lastPlayerPosition;
-    private bool textActive;
-    private bool qteActive;
-    private float qteTimer;
-    private bool qteEnabled = false;
-    private bool movementLocked = false;
-    public bool GameOver = false;
+    public bool GameOver { get; private set; } = false;
 
-    // STOP state
-    private bool stopActive = false;
-    private Vector3 stopStartPosition;
-    private Coroutine stopCoroutine;
-    private Coroutine climbSequenceCoroutine;
+    // Active phase tracking
+    private GamePhase currentPhase = GamePhase.Idle;
+    private float phaseTimer = 0f;
+
+    // QTE state
+    private float qteTimeRemaining = 0f;
+
+    // Coroutines
+    private Coroutine stopCoroutine;    
+
+    private enum GamePhase
+    {
+        Idle,
+        IntroText,
+        QTEWindow,
+        QTEActive,
+        Stop,
+        GameOverPhase
+    }
 
     private void Start()
     {
-        if (himGameObject != null)
-        {
-            himScript = himGameObject.GetComponent<HIM>();
-        }
-        else
-        {
-            himScript = FindObjectOfType<HIM>();
-        }
+        himScript = himGameObject != null ? himGameObject.GetComponent<HIM>() : FindObjectOfType<HIM>();
+        textBox = textBoxGameObject;
+        qteText = qteTextGameObject;
 
-        if (textBoxGameObject != null)
-        {
-            textBox = textBoxGameObject;
-            textBox.SetActive(false);
-        }
-
-        if (qteTextGameObject != null)
-        {
-            qteText = qteTextGameObject;
-            qteText.SetActive(false);
-        }
+        if (textBox != null) textBox.SetActive(false);
+        if (qteText != null) qteText.SetActive(false);
     }
 
     private void Update()
@@ -105,69 +69,95 @@ public class GameLoop : MonoBehaviour
         if (GameOver)
             return;
 
-        // Check if player moved while intro text is active -> immediate Game Over
-        if (textActive)
+        phaseTimer += Time.deltaTime;
+
+        switch (currentPhase)
         {
-            if (Camera.main != null && Vector3.Distance(Camera.main.transform.position, lastPlayerPosition) > moveThreshold)
-            {
-                Debug.Log("GameLoop: Player moved during intro text! Game Over.");
-                TriggerGameOver("Player moved during intro text");
-                return;
-            }
-        }
-
-        // STOP takes priority: if STOP is active and player moves -> Game Over
-        if (stopActive && Camera.main != null)
-        {
-            if (Vector3.Distance(Camera.main.transform.position, stopStartPosition) > moveThreshold)
-            {
-                Debug.Log("GameLoop: Player moved during STOP! Game Over by STOP priority.");
-                TriggerGameOver("Player moved during STOP");
-                return;
-            }
-        }
-
-        // Handle Space key to attempt climb (only after QTE is enabled and movement not locked)
-        if (!GameOver && qteEnabled && !movementLocked && Input.GetKeyDown(KeyCode.Space))
-        {
-            if (stopActive)
-            {
-                Debug.Log("GameLoop: Attempt ignored because STOP is active.");
-            }
-            else
-            {
-                AttemptClimb();
-            }
-        }
-
-        // Handle QTE input
-        if (qteActive)
-        {
-            qteTimer -= Time.deltaTime;
-
-            if (qteTimer <= 0f)
-            {
-                QTEFailed();
-            }
-
-            if (Input.GetKeyDown(KeyCode.E))
-            {
-                if (stopActive)
-                {
-                    Debug.Log("GameLoop: QTE input ignored due to STOP priority.");
-                    qteActive = false;
-                }
-                else
-                {
-                    QTESuccess();
-                }
-            }
+            case GamePhase.IntroText:
+                HandleIntroTextPhase();
+                break;
+            case GamePhase.QTEWindow:
+                HandleQTEWindowPhase();
+                break;
+            case GamePhase.QTEActive:
+                HandleQTEActivePhase();
+                break;
+            case GamePhase.Stop:
+                HandleStopPhase();
+                break;
         }
     }
 
-    public void LockPlayerMovement(bool isLocked)
+    private void HandleIntroTextPhase()
     {
-        movementLocked = isLocked;
+        if (HasPlayerMoved())
+        {
+            EndGame("Player moved during intro text");
+            return;
+        }
+
+        if (phaseTimer >= 3f)
+        {
+            ExitIntroTextPhase();
+        }
+    }
+
+    private void HandleQTEWindowPhase()
+    {
+        if (HasPlayerMoved())
+        {
+            EndGame("Player moved during climb attempt");
+            return;
+        }
+
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            AttemptClimb();
+        }
+    }
+
+    private void HandleQTEActivePhase()
+    {
+        if (HasPlayerMoved())
+        {
+            EndGame("Player moved during QTE");
+            return;
+        }
+
+        qteTimeRemaining -= Time.deltaTime;
+
+        if (qteTimeRemaining <= 0f)
+        {
+            QTETimeout();
+            return;
+        }
+
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            QTESuccess();
+        }
+    }
+
+    private void HandleStopPhase()
+    {
+        if (HasPlayerMoved())
+        {
+            EndGame("Player moved during STOP");
+            return;
+        }
+
+        if (phaseTimer >= stopCheckDuration)
+        {
+            ExitStopPhase();
+        }
+    }
+
+    private bool HasPlayerMoved()
+    {
+        if (Camera.main == null)
+            return false;
+
+        return Vector3.Distance(Camera.main.transform.position, lastPlayerPosition) > moveThreshold;
     }
 
     public void ActivateClimbSequence(GameObject displayTextBox, string displayText, float delayBeforeClimb)
@@ -175,199 +165,174 @@ public class GameLoop : MonoBehaviour
         textBox = displayTextBox;
         lastPlayerPosition = Camera.main != null ? Camera.main.transform.position : Vector3.zero;
 
+        EnterIntroTextPhase(displayText, delayBeforeClimb);
+        StartSTOPTimer();
+    }
+
+    // ========== INTRO TEXT PHASE ==========
+    private void EnterIntroTextPhase(string text, float delayBeforeQTE)
+    {
+        currentPhase = GamePhase.IntroText;
+        phaseTimer = 0f;
+
         if (textBox != null)
         {
             textBox.SetActive(true);
-        }
-
-        if (climbSequenceCoroutine != null)
-        {
-            StopCoroutine(climbSequenceCoroutine);
-        }
-        climbSequenceCoroutine = StartCoroutine(TextBoxRoutine(displayText, delayBeforeClimb));
-
-        if (stopCoroutine != null)
-        {
-            StopCoroutine(stopCoroutine);
-        }
-        stopCoroutine = StartCoroutine(StopRoutine());
-    }
-
-    private IEnumerator TextBoxRoutine(string text, float delayBeforeClimb)
-    {
-        textActive = true;
-        if (textBox != null)
-        {
             TextMeshProUGUI textComponent = textBox.GetComponent<TextMeshProUGUI>();
             if (textComponent != null)
-            {
                 textComponent.text = text;
-            }
         }
 
-        yield return new WaitForSeconds(3f);
+        // Schedule QTE start
+        Invoke(nameof(EnterQTEWindowPhase), 3f + delayBeforeQTE);
+    }
 
-        if (GameOver)
-            yield break;
-
-        textActive = false;
+    private void ExitIntroTextPhase()
+    {
         if (textBox != null)
-        {
             textBox.SetActive(false);
-        }
+    }
 
-        Debug.Log($"GameLoop: Waiting {delayBeforeClimb} seconds before QTE starts...");
-        yield return new WaitForSeconds(delayBeforeClimb);
-
+    // ========== QTE WINDOW PHASE ==========
+    private void EnterQTEWindowPhase()
+    {
         if (GameOver)
-            yield break;
+            return;
 
-        movementLocked = false;
-        qteEnabled = true;
-        Debug.Log("GameLoop: QTE enabled! Press Space to climb!");
+        currentPhase = GamePhase.QTEWindow;
+        phaseTimer = 0f;
+
+        if (qteText != null)
+            qteText.SetActive(true);
+
+        Debug.Log("GameLoop: QTE Window open! Press Space to climb!");
+    }
+
+    private void ExitQTEWindowPhase()
+    {
+        if (qteText != null)
+            qteText.SetActive(false);
+
+        currentPhase = GamePhase.Idle;
     }
 
     private void AttemptClimb()
     {
-        float randomValue = Random.value;
-
-        if (randomValue < qteChance)
+        if (Random.value < qteChance)
         {
-            StartCoroutine(QTERoutine());
+            // QTE triggered
+            StartQTE();
         }
         else
         {
+            // Normal climb
+            ExitQTEWindowPhase();
             MovePlayerUp(normalMoveAmount);
-            Debug.Log("GameLoop: Normal climb! No QTE this time.");
+            Debug.Log("GameLoop: Normal climb!");
         }
     }
 
-    private IEnumerator QTERoutine()
+    // ========== QTE ACTIVE PHASE ==========
+    private void StartQTE()
     {
-        qteActive = true;
-        qteTimer = qteWindow;
-        Debug.Log($"GameLoop: QTE started! Press E in {qteWindow} seconds!");
+        currentPhase = GamePhase.QTEActive;
+        phaseTimer = 0f;
+        qteTimeRemaining = qteWindow;
 
         if (qteText != null)
-        {
             qteText.SetActive(true);
-            Debug.Log("GameLoop: QTE text activated!");
-        }
 
-        yield return new WaitForSeconds(qteWindow);
-
-        if (qteActive)
-        {
-            QTEFailed();
-        }
-    }
-
-    private IEnumerator StopRoutine()
-    {
-        float delay = Random.Range(stopMinDelay, stopMaxDelay);
-        Debug.Log($"GameLoop: STOP will be announced in {delay:F2} seconds.");
-        yield return new WaitForSeconds(delay);
-
-        if (GameOver)
-            yield break;
-
-        if (himScript != null)
-        {
-            himScript.ShowHIM(stopDialogue);
-        }
-        else
-        {
-            Debug.Log("GameLoop: HIM not assigned, but STOP announced internally.");
-        }
-
-        bool previousQteEnabled = qteEnabled;
-        qteEnabled = false;
-
-        if (qteActive)
-        {
-            qteActive = false;
-            Debug.Log("GameLoop: Active QTE cancelled due to STOP priority.");
-        }
-
-        stopActive = true;
-        stopStartPosition = Camera.main != null ? Camera.main.transform.position : Vector3.zero;
-
-        float elapsed = 0f;
-        while (elapsed < stopCheckDuration && !GameOver)
-        {
-            elapsed += Time.deltaTime;
-            yield return null;
-        }
-
-        stopActive = false;
-        qteEnabled = previousQteEnabled;
-
-        if (himScript != null)
-        {
-            himScript.HideTextBox();
-        }
-
-        stopCoroutine = null;
-        Debug.Log("GameLoop: STOP window ended.");
-    }
-
-    private void MovePlayerUp(float amount)
-    {
-        if (Camera.main != null)
-        {
-            Camera.main.transform.position += Vector3.up * amount;
-        }
+        Debug.Log($"GameLoop: QTE Active! Press E in {qteWindow} seconds!");
     }
 
     private void QTESuccess()
     {
-        qteActive = false;
-
         if (qteText != null)
-        {
             qteText.SetActive(false);
-        }
+
+        currentPhase = GamePhase.Idle;
 
         Debug.Log("GameLoop: QTE Success! Moving up double!");
         MovePlayerUp(doubleMoveAmount);
     }
 
-    private void QTEFailed()
+    private void QTETimeout()
     {
-        qteActive = false;
-        TriggerGameOver("QTE Failed");
+        EndGame("QTE Failed - Time expired");
     }
 
-    private void TriggerGameOver(string reason)
+    // ========== STOP PHASE ==========
+    private void StartSTOPTimer()
     {
-        stopActive = false;
-        qteActive = false;
-        qteEnabled = false;
+        if (stopCoroutine != null)
+            StopCoroutine(stopCoroutine);
+
+        stopCoroutine = StartCoroutine(STOPTimerRoutine());
+    }
+
+    private IEnumerator STOPTimerRoutine()
+    {
+        float delay = Random.Range(stopMinDelay, stopMaxDelay);
+        Debug.Log($"GameLoop: STOP in {delay:F2} seconds");
+
+        yield return new WaitForSeconds(delay);
+
+        if (GameOver)
+            yield break;
+
+        EnterStopPhase();
+    }
+
+    private void EnterStopPhase()
+    {
+        currentPhase = GamePhase.Stop;
+        phaseTimer = 0f;
+        lastPlayerPosition = Camera.main != null ? Camera.main.transform.position : Vector3.zero;
+
+        if (himScript != null)
+            himScript.ShowHIM(stopDialogue);
+
+        Debug.Log("GameLoop: STOP! Don't move!");
+    }
+
+    private void ExitStopPhase()
+    {
+        if (himScript != null)
+            himScript.HideTextBox();
+
+        currentPhase = GamePhase.Idle;
+    }
+
+    // ========== MOVEMENT & GAME OVER ==========
+    private void MovePlayerUp(float amount)
+    {
+        if (Camera.main != null)
+            Camera.main.transform.position += Vector3.up * amount;
+    }
+
+    public void LockPlayerMovement(bool isLocked)
+    {
+        // Implement in Player script if needed
+    }
+
+    private void EndGame(string reason)
+    {
+        if (GameOver)
+            return;
+
         GameOver = true;
+        currentPhase = GamePhase.GameOverPhase;
+
+        CancelInvoke();
+        if (stopCoroutine != null)
+            StopCoroutine(stopCoroutine);
 
         if (qteText != null)
-        {
             qteText.SetActive(false);
-        }
 
         if (textBox != null)
-        {
             textBox.SetActive(false);
-        }
 
-        if (stopCoroutine != null)
-        {
-            StopCoroutine(stopCoroutine);
-            stopCoroutine = null;
-        }
-
-        if (climbSequenceCoroutine != null)
-        {
-            StopCoroutine(climbSequenceCoroutine);
-            climbSequenceCoroutine = null;
-        }
-
-        Debug.Log($"GameLoop: Game Over! Reason: {reason}");
+        Debug.Log($"GameLoop: GAME OVER - {reason}");
     }
 }
- 
